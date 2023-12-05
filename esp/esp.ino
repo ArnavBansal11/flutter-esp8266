@@ -4,12 +4,17 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <WifiClient.h>
+#include <EEPROM.h>
 
 #include "certs.h"
 #include "Arduino_JSON.h"
 
-const char* ssid = "DPSN WIFI";
-const char* password = "30@dpsnoida";
+struct {
+  String ssid = "";
+  String password = "";
+} wifiSettings;
+int isSetup = 0;
+
 
 const char* baseUrl = "https://jsonplaceholder.typicode.com/todos/1";
 
@@ -19,25 +24,39 @@ void handleRoot() {
   server.send(200, "text/plain", "hello from esp8266!\r\n");
 }
 
-void handleWifiUpdate(){
+void handleWifiUpdate() {
+  Serial.println("Hello There");
   String ssid;
   String password;
 
   for (uint8_t i = 0; i < server.args(); i++) {
-     if(server.argName(i) == "ssid"){
+    if (server.argName(i) == "ssid") {
       ssid = server.arg(i);
-     } else if(server.argName(i) == "password") {
+    } else if (server.argName(i) == "password") {
       password = server.arg(i);
-     }
+    }
   }
 
-  if(!ssid || !password){
+  if (!ssid || !password) {
     server.send(403, "text/plain", "Credentials Missing");
     return;
   }
 
-  server.send(200, "text/plain", "Saved");
+  Serial.println(ssid);
+  Serial.println(password);
 
+  wifiSettings.password = password;
+  wifiSettings.ssid = ssid;
+
+  int set = 5;
+  EEPROM.put(32, wifiSettings);
+  EEPROM.put(0, set);
+  EEPROM.commit();
+
+  server.send(200, "text/plain", "Saved");
+  delay(2000);
+
+  ESP.reset();
 }
 
 void handleNotFound() {
@@ -55,32 +74,47 @@ void handleNotFound() {
 
 void setup() {
   Serial.begin(115200);
+  EEPROM.begin(512);
   Serial.println();
 
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP("esp8266");
+  EEPROM.get(0, isSetup);
 
-  IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP Address: ");
-  Serial.println(IP);
-  Serial.print("The IP Address of ESP8266 Module is: ");
-  Serial.print(WiFi.localIP());
-  Serial.println();
+  Serial.println("HELLO");
+  Serial.println(isSetup);
 
-  if(MDNS.begin("esp8266")) {
-    Serial.println("MDNS Responder Started");
+  if (isSetup != 5) {
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP("esp8266");
+
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP Address: ");
+    Serial.println(IP);
+    Serial.print("The IP Address of ESP8266 Module is: ");
+    Serial.print(WiFi.localIP());
+    Serial.println();
+
+    if (MDNS.begin("esp8266")) {
+      Serial.println("MDNS Responder Started");
+    }
+
+    server.on("/", handleRoot);
+    server.on("/wifi/update", handleWifiUpdate);
+    server.onNotFound(handleNotFound);
+
+    server.begin();
+  } else {
+    Serial.println("ESP IS SETUP");
+    EEPROM.get(32, wifiSettings);
+
+    Serial.println(wifiSettings.ssid);
   }
-
-  server.on("/", handleRoot);
-  server.on("/wifi/update", handleWifiUpdate);
-  server.onNotFound(handleNotFound);
-
-  server.begin();
 }
 
 void loop() {
-  server.handleClient();
-  MDNS.update();
+  if (isSetup != 5) {
+    server.handleClient();
+    MDNS.update();
+  }
 }
 
 String httpGETRequest(const char* serverName) {
