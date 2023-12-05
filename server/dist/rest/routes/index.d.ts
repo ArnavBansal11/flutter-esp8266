@@ -1,0 +1,2 @@
+/// <reference types="node" />
+export declare const GET: import("fastify").RouteShorthandOptionsWithHandler<import("fastify").RawServerDefault, import("http").IncomingMessage, import("http").ServerResponse<import("http").IncomingMessage>, import("fastify").RouteGenericInterface, unknown, import("fastify").FastifySchema, import("fastify-type-provider-zod").ZodTypeProvider, import("fastify").FastifyBaseLogger>;
