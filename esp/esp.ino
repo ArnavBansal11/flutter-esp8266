@@ -48,8 +48,8 @@ void handleWifiUpdate() {
   wifiSettings.password = password;
   wifiSettings.ssid = ssid;
 
-  int set = 5;
-  EEPROM.put(32, wifiSettings);
+  int set =5;
+  EEPROM.put(16, wifiSettings.password);
   EEPROM.put(0, set);
   EEPROM.commit();
 
@@ -73,9 +73,12 @@ void handleNotFound() {
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   EEPROM.begin(512);
   Serial.println();
+
+  // for (int i = 0; i < 512; EEPROM.write(i++,0));
+  // Serial.println("Erased");
 
   EEPROM.get(0, isSetup);
 
@@ -104,14 +107,28 @@ void setup() {
     server.begin();
   } else {
     Serial.println("ESP IS SETUP");
-    EEPROM.get(32, wifiSettings);
+    EEPROM.get(16, wifiSettings.ssid);
+    EEPROM.get(256, wifiSettings.password);
+
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(wifiSettings.ssid, wifiSettings.password);
 
     Serial.println(wifiSettings.ssid);
+    Serial.println(wifiSettings.password);
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
   }
 }
 
 void loop() {
-  if (isSetup != 5) {
+  if (isSetup == 5) {
     server.handleClient();
     MDNS.update();
   }
