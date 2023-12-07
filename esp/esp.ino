@@ -9,9 +9,12 @@
 #include "certs.h"
 #include "Arduino_JSON.h"
 
+#define GREEN_LED 12
+#define RED_LED 14
+
 struct {
-  String ssid = "";
-  String password = "";
+  char ssid[64];
+  char p[64];
 } wifiSettings;
 int isSetup = 0;
 
@@ -26,14 +29,14 @@ void handleRoot() {
 
 void handleWifiUpdate() {
   Serial.println("Hello There");
-  String ssid;
-  String password;
+  char ssid[64];
+  char password[64];
 
   for (uint8_t i = 0; i < server.args(); i++) {
     if (server.argName(i) == "ssid") {
-      ssid = server.arg(i);
+      server.arg(i).toCharArray(ssid, 64);
     } else if (server.argName(i) == "password") {
-      password = server.arg(i);
+      server.arg(i).toCharArray(password, 64);
     }
   }
 
@@ -45,12 +48,13 @@ void handleWifiUpdate() {
   Serial.println(ssid);
   Serial.println(password);
 
-  wifiSettings.password = password;
-  wifiSettings.ssid = ssid;
+  memcpy(wifiSettings.p, password, 64);
+  memcpy(wifiSettings.ssid, ssid, 64);  
+  // wifiSettings.ssid = ssid;
 
-  int set =5;
-  EEPROM.put(16, wifiSettings.password);
+  int set = 5;
   EEPROM.put(0, set);
+  EEPROM.put(16, wifiSettings);
   EEPROM.commit();
 
   server.send(200, "text/plain", "Saved");
@@ -74,8 +78,11 @@ void handleNotFound() {
 
 void setup() {
   Serial.begin(9600);
-  EEPROM.begin(512);
-  Serial.println();
+  EEPROM.begin(256);
+  pinMode(GREEN_LED, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+  digitalWrite(GREEN_LED, 0);
+  digitalWrite(RED_LED, 0);
 
   // for (int i = 0; i < 512; EEPROM.write(i++,0));
   // Serial.println("Erased");
@@ -86,8 +93,9 @@ void setup() {
   Serial.println(isSetup);
 
   if (isSetup != 5) {
+    digitalWrite(RED_LED, 1);
     WiFi.mode(WIFI_AP);
-    WiFi.softAP("esp8266");
+    WiFi.softAP("IoT Device");
 
     IPAddress IP = WiFi.softAPIP();
     Serial.print("AP IP Address: ");
@@ -106,20 +114,22 @@ void setup() {
 
     server.begin();
   } else {
+    digitalWrite(RED_LED, 1);
     Serial.println("ESP IS SETUP");
-    EEPROM.get(16, wifiSettings.ssid);
-    EEPROM.get(256, wifiSettings.password);
+    EEPROM.get(16, wifiSettings);
 
     WiFi.mode(WIFI_STA);
-    WiFi.begin(wifiSettings.ssid, wifiSettings.password);
+    WiFi.begin(wifiSettings.ssid, wifiSettings.p);
 
     Serial.println(wifiSettings.ssid);
-    Serial.println(wifiSettings.password);
+    Serial.println(wifiSettings.p);
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
     }
 
+    digitalWrite(RED_LED, 0);
+    digitalWrite(GREEN_LED, 1);
     Serial.println("");
     Serial.println("WiFi connected");
     Serial.println("IP address: ");
@@ -128,7 +138,7 @@ void setup() {
 }
 
 void loop() {
-  if (isSetup == 5) {
+  if (isSetup != 5) {
     server.handleClient();
     MDNS.update();
   }

@@ -1,4 +1,7 @@
-const input = `3J4KT 513
+from statistics import mode 
+
+t=0 
+x="""3J4KT 513
 Q3K42 147
 29JQK 187
 AAKA9 821
@@ -997,68 +1000,66 @@ A3323 4
 62AK3 519
 5542K 932
 76K27 842
-7T33T 941`;
+7T33T 941""".splitlines()
 
-const data = input.split("\n");
+248652697
 
-const strength = "23456789TJQKA";
+y=[]
+vv="AKQT98765432J"
+vv=vv[::-1]
+v={r:i for i,r in enumerate(vv)}
+print(v)
 
-const orders = [];
+def d(a):
+    a,b=a.split()
+    aa=a
+    b=int(b)
+    h=[]
+    if mode(list(a))=="J":
+        c=a.replace("J","")
+        if len(c)==0:
+            a=a.replace("J","A")
+        else:a=a.replace("J",mode(list(c)))
+    l=a.count("J")
+    if l>0:k=1
+    else:k=0
+    if a.count(mode(list(a)))+l==5:
+        h.append(10)
+        for i in aa:h.append(v[i])
+    elif a.count(mode(list(a)))+l==4:
+        h.append(9)
+        for i in aa:h.append(v[i])
+    elif len(set(a))-k==2:
+        h.append(8)
+        for i in aa:h.append(v[i])
+    elif a.count(mode(list(a)))+l==3:
+        h.append(7)
+        for i in aa:h.append(v[i])
+    elif len(set(a))-k==3 and a.count(mode(list(a)))+l==2:
+        h.append(6)
+        for i in aa:h.append(v[i])
+    elif len(set(a))-k==4 and a.count(mode(list(a)))+l==2:
+        h.append(5)
+        for i in aa:h.append(v[i])
+    else:
+        h.append(4)
+        for i in aa:h.append(v[i])
+    return tuple(h),b
 
-data.forEach((d) => {
-  const [card, bid] = d.split(" ");
-  const frequencies = {};
-  card.split("").forEach((c) => {
-    if (frequencies[c]) frequencies[c] += 1;
-    else frequencies[c] = 1;
-  });
+for i in x:
+    a,b=d(i)
+    y.append(a)
+    
+y=sorted(y)
 
-  const sorted = Object.values(frequencies).sort().reverse();
+for i,r in enumerate(y):
+    for ii in x:
+        a,b=d(ii)
+        if a==r:
+            t+=(i+1)*b
+            break
 
-  let order = sorted[0];
 
-  if (order == 1) {
-    order = 0;
-  }
 
-  if (order == 2) {
-    if (sorted[1] != 2) {
-      order = 1;
-    }
-  }
 
-  orders.push({ card, bid, order });
-});
-
-const sortedCards = orders.sort((a, b) => {
-  if (a.order > b.order) return 1;
-  if (a.order < b.order) return -1;
-
-  let returnVal = -1;
-  for (let i = 0; i < 5; i++) {
-    const x = a.card[i];
-    const y = b.card[i];
-
-    if (strength.indexOf(x) > strength.indexOf(y)) {
-      returnVal = 1;
-      break;
-    } else if (strength.indexOf(x) < strength.indexOf(y)) {
-      returnVal = -1;
-      break;
-    }
-  }
-
-  return returnVal;
-});
-
-let sum = 0;
-
-// console.log(sortedCards.splice(950, sortedCards.length - 1));
-
-console.log(sortedCards.length)
-sortedCards.forEach(({ bid }, i) => {
-  // console.log(bid);
-  sum += parseInt(bid) * (i + 1);
-});
-
-console.log(sum);
+print(t) 

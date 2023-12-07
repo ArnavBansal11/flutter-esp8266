@@ -11,7 +11,6 @@ import { fileRouter } from "./rest/fileRouter";
 import { join } from "path";
 import { env } from "./utils/env";
 import { requireAuth } from "./rest/middleware/requireAuth";
-const http = require("http");
 
 const main = async () => {
   const app = fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
