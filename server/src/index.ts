@@ -39,7 +39,7 @@ const main = async () => {
   const port = parseInt(env("PORT", "8000"));
 
   try {
-    await app.listen({ port });
+    await app.listen({ port, host });
     app.log.info(`Server listening on ${host}:${port}`);
   } catch (e) {
     app.log.error(e);
