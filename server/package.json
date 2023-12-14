@@ -15,7 +15,8 @@
     "prisma:generate": "prisma generate && tsc",
     "prisma:format": "prisma format",
     "prisma": "prisma",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "postinstall": "prisma generate && tsc"
   },
   "author": "",
   "license": "ISC",
